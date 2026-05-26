@@ -40,56 +40,167 @@
             <option value="snow">Snow</option>
           </select>
         </label>
-        <label>
-          Time of Day
-          <select name="scene">
-            <option value="day">Day</option>
-            <option value="sunrise">Sunrise</option>
-            <option value="sunset">Sunset</option>
-            <option value="night-full">Night (Full Moon)</option>
-            <option value="night-half">Night (Crescent Moon)</option>
-          </select>
-        </label>
+        <div class="control-group">
+          <span class="control-label" id="scene-label">Time of Day</span>
+          <div class="option-grid option-grid--scene" role="radiogroup" aria-labelledby="scene-label">
+            <label class="option-choice">
+              <input type="radio" name="scene" value="day" checked>
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="clear-day" alt="">
+                <span class="option-choice__label">Day</span>
+              </span>
+            </label>
+            <label class="option-choice">
+              <input type="radio" name="scene" value="sunrise">
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="sunrise" alt="">
+                <span class="option-choice__label">Sunrise</span>
+              </span>
+            </label>
+            <label class="option-choice">
+              <input type="radio" name="scene" value="sunset">
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="sunset" alt="">
+                <span class="option-choice__label">Sunset</span>
+              </span>
+            </label>
+            <label class="option-choice">
+              <input type="radio" name="scene" value="night-full">
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="moon-full" alt="">
+                <span class="option-choice__label">Full Moon</span>
+              </span>
+            </label>
+            <label class="option-choice">
+              <input type="radio" name="scene" value="night-half">
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="moon-waning-crescent" alt="">
+                <span class="option-choice__label">Crescent</span>
+              </span>
+            </label>
+          </div>
+        </div>
       </fieldset>
 
       <fieldset>
         <legend>Weather</legend>
-        <label>
-          Clouds
-          <select name="clouds">
-            <option value="none">None</option>
-            <option value="few" selected>Few</option>
-            <option value="many">Many</option>
-          </select>
-        </label>
-        <label>
-          Rain
-          <select name="rain">
-            <option value="none" selected>None</option>
-            <option value="light">Light</option>
-            <option value="heavy">Heavy</option>
-          </select>
-        </label>
-        <label>
-          Snow
-          <select name="snow">
-            <option value="none" selected>None</option>
-            <option value="light">Light</option>
-            <option value="heavy">Heavy</option>
-          </select>
-        </label>
-        <label>
-          Wind
-          <select name="wind">
-            <option value="none" selected>None</option>
-            <option value="light">Light</option>
-            <option value="strong">Strong</option>
-          </select>
-        </label>
-        <label class="check">
-          <input type="checkbox" name="fog">
-          Fog
-        </label>
+        <div class="control-group">
+          <span class="control-label" id="clouds-label">Clouds</span>
+          <div class="option-grid" role="radiogroup" aria-labelledby="clouds-label">
+            <label class="option-choice">
+              <input type="radio" name="clouds" value="none">
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="not-available" alt="">
+                <span class="option-choice__label">None</span>
+              </span>
+            </label>
+            <label class="option-choice">
+              <input type="radio" name="clouds" value="few" checked>
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="partly-cloudy-day" alt="">
+                <span class="option-choice__label">Few</span>
+              </span>
+            </label>
+            <label class="option-choice">
+              <input type="radio" name="clouds" value="many">
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="cloudy" alt="">
+                <span class="option-choice__label">Many</span>
+              </span>
+            </label>
+          </div>
+        </div>
+        <div class="control-group">
+          <span class="control-label" id="rain-label">Rain</span>
+          <div class="option-grid" role="radiogroup" aria-labelledby="rain-label">
+            <label class="option-choice">
+              <input type="radio" name="rain" value="none" checked>
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="not-available" alt="">
+                <span class="option-choice__label">None</span>
+              </span>
+            </label>
+            <label class="option-choice">
+              <input type="radio" name="rain" value="light">
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="drizzle" alt="">
+                <span class="option-choice__label">Light</span>
+              </span>
+            </label>
+            <label class="option-choice">
+              <input type="radio" name="rain" value="heavy">
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="rain" alt="">
+                <span class="option-choice__label">Heavy</span>
+              </span>
+            </label>
+          </div>
+        </div>
+        <div class="control-group">
+          <span class="control-label" id="snow-label">Snow</span>
+          <div class="option-grid" role="radiogroup" aria-labelledby="snow-label">
+            <label class="option-choice">
+              <input type="radio" name="snow" value="none" checked>
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="not-available" alt="">
+                <span class="option-choice__label">None</span>
+              </span>
+            </label>
+            <label class="option-choice">
+              <input type="radio" name="snow" value="light">
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="snowflake" alt="">
+                <span class="option-choice__label">Light</span>
+              </span>
+            </label>
+            <label class="option-choice">
+              <input type="radio" name="snow" value="heavy">
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="snow" alt="">
+                <span class="option-choice__label">Heavy</span>
+              </span>
+            </label>
+          </div>
+        </div>
+        <div class="control-group">
+          <span class="control-label" id="wind-label">Wind</span>
+          <div class="option-grid" role="radiogroup" aria-labelledby="wind-label">
+            <label class="option-choice">
+              <input type="radio" name="wind" value="none" checked>
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="wind-beaufort-0" alt="">
+                <span class="option-choice__label">None</span>
+              </span>
+            </label>
+            <label class="option-choice">
+              <input type="radio" name="wind" value="light">
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="wind-beaufort-3" alt="">
+                <span class="option-choice__label">Light</span>
+              </span>
+            </label>
+            <label class="option-choice">
+              <input type="radio" name="wind" value="strong">
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="wind-beaufort-8" alt="">
+                <span class="option-choice__label">Strong</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <span class="control-label" id="other-label">Other</span>
+          <div class="option-grid" role="radiogroup" aria-labelledby="other-label">
+            <label class="option-choice">
+              <input type="checkbox" name="fog">
+              <span class="option-choice__body">
+                <img class="option-choice__icon" data-meteocon="fog" alt="">
+                <span class="option-choice__label">Fog</span>
+              </span>
+            </label>
+          </div>
+        </div>
       </fieldset>
 
       <div class="form-actions">

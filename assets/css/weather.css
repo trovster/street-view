@@ -51,7 +51,7 @@ main {
     opacity 180ms ease,
     overlay 260ms allow-discrete,
     display 260ms allow-discrete;
-  width: min(390px, calc(100vw - 24px));
+  width: min(500px, calc(100vw - 24px));
 }
 
 #weather-form[popover]:popover-open {
@@ -170,9 +170,12 @@ legend {
   text-transform: uppercase;
 }
 
-label {
+.control-group {
   display: grid;
-  gap: 7px;
+  gap: 8px;
+}
+
+.control-label {
   font-size: 0.9rem;
   font-weight: 650;
 }
@@ -193,18 +196,75 @@ select {
   width: 100%;
 }
 
-.check {
-  align-items: center;
-  display: flex;
-  gap: 10px;
-  min-height: 34px;
+.option-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.check input {
-  accent-color: #2f6c57;
-  height: 18px;
-  margin: 0;
-  width: 18px;
+.option-grid--scene {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.option-choice {
+  display: block;
+  min-width: 0;
+  position: relative;
+}
+
+.option-choice input {
+  height: 1px;
+  opacity: 0;
+  position: absolute;
+  width: 1px;
+}
+
+.option-choice__body {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #b9c2bf;
+  border-radius: 7px;
+  color: #182025;
+  cursor: pointer;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 30px minmax(0, 1fr);
+  min-height: 50px;
+  padding: 7px 9px;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+  width: 100%;
+}
+
+.option-choice:hover .option-choice__body {
+  border-color: #7f9088;
+}
+
+.option-choice input:checked + .option-choice__body {
+  background: #edf7f0;
+  border-color: #2f6c57;
+  box-shadow: inset 0 0 0 1px #2f6c57;
+}
+
+.option-choice input:focus-visible + .option-choice__body {
+  outline: 3px solid rgba(47, 108, 87, 0.28);
+  outline-offset: 2px;
+}
+
+.option-choice__icon {
+  display: block;
+  height: 30px;
+  object-fit: contain;
+  width: 30px;
+}
+
+.option-choice__label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .form-actions {
@@ -401,12 +461,6 @@ button:hover {
   display: none;
 }
 
-@media (max-width: 900px) {
-  #weather-form[popover] {
-    width: min(380px, calc(100vw - 16px));
-  }
-}
-
 @media (max-width: 640px) {
   #weather-form {
     padding: 18px;
@@ -415,5 +469,12 @@ button:hover {
   #weather-form[popover] {
     border-left: 0;
     width: 100vw;
+  }
+}
+
+@media (max-width: 420px) {
+  .option-grid,
+  .option-grid--scene {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
