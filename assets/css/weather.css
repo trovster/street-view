@@ -73,6 +73,51 @@ main {
   opacity: 1;
 }
 
+.about-popover {
+  align-content: start;
+  background: #f8f9f7;
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+}
+
+.about-popover[popover] {
+  border: 1px solid #d8dedb;
+  border-radius: 8px;
+  box-shadow: 0 24px 70px rgba(21, 28, 32, 0.28);
+  inset: 50% auto auto 50%;
+  margin: 0;
+  max-height: calc(100dvh - 32px);
+  opacity: 0;
+  overflow: auto;
+  transform: translate(-50%, -48%) scale(0.96);
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 180ms ease,
+    overlay 220ms allow-discrete,
+    display 220ms allow-discrete;
+  width: min(460px, calc(100vw - 32px));
+}
+
+.about-popover[popover]:popover-open {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.about-popover[popover]::backdrop {
+  background: rgba(12, 18, 22, 0.38);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  transition:
+    opacity 180ms ease,
+    overlay 220ms allow-discrete,
+    display 220ms allow-discrete;
+}
+
+.about-popover[popover]:popover-open::backdrop {
+  opacity: 1;
+}
+
 @starting-style {
   #weather-form[popover]:popover-open {
     opacity: 0;
@@ -82,9 +127,19 @@ main {
   #weather-form[popover]:popover-open::backdrop {
     opacity: 0;
   }
+
+  .about-popover[popover]:popover-open {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+
+  .about-popover[popover]:popover-open::backdrop {
+    opacity: 0;
+  }
 }
 
-h1 {
+h1,
+h2 {
   font-size: 1.2rem;
   font-weight: 700;
   line-height: 1.2;
@@ -199,6 +254,24 @@ button:hover {
   z-index: 2;
 }
 
+.about-trigger {
+  backdrop-filter: blur(10px);
+  background: rgba(24, 32, 37, 0.88);
+  border-radius: 999px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  box-shadow: 0 12px 30px rgba(21, 28, 32, 0.18);
+  min-height: 44px;
+  padding: 0;
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  width: 44px;
+  z-index: 2;
+}
+
+.about-trigger:hover {
+  background: #314046;
+}
+
 .button-icon {
   background: #eef1f2;
   border: 1px solid #d8dedb;
@@ -218,6 +291,26 @@ button:hover {
 
 .button-reset:hover {
   background: #95483d;
+}
+
+.about-content {
+  color: #314046;
+  display: grid;
+  gap: 14px;
+  line-height: 1.6;
+}
+
+.about-content p {
+  margin: 0;
+}
+
+.about-content a {
+  color: #2f6c57;
+  font-weight: 700;
+}
+
+.about-content a:hover {
+  color: #214c3e;
 }
 
 .stage-wrap {
