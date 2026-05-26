@@ -299,7 +299,12 @@ function formatTimelineTime(time) {
   }).format(date);
 }
 
-form.addEventListener("input", updateScene);
+function handleManualSceneInput() {
+  stopTimelinePlayback();
+  updateScene();
+}
+
+form.addEventListener("input", handleManualSceneInput);
 form.querySelector("[data-reset-scene]").addEventListener("click", resetScene);
 form.querySelector("[data-random-scene]").addEventListener("click", randomScene);
 timelinePlayButton?.addEventListener("click", () => {

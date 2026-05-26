@@ -224,6 +224,10 @@ if (!weatherJs.includes("stopTimelinePlayback()")) {
   failures.push("weather.js does not stop timeline playback at the latest point.");
 }
 
+if (!weatherJs.includes("function handleManualSceneInput()") || !weatherJs.includes('form.addEventListener("input", handleManualSceneInput)')) {
+  failures.push("Manual option changes do not pause timeline playback before applying the option value.");
+}
+
 if (!weatherJs.includes('stage.classList.add("is-weather-playback")') || !weatherJs.includes('stage.classList.remove("is-weather-playback")')) {
   failures.push("weather.js does not scope layer fades to active weather playback.");
 }
