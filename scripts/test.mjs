@@ -124,8 +124,8 @@ if (!deployWorkflow.includes("npm ci")) {
   failures.push("The deploy workflow does not install npm dependencies.");
 }
 
-if (!deployWorkflow.includes('cron: "15 * * * *"')) {
-  failures.push("The deploy workflow is not scheduled hourly after the data fetch workflow.");
+if (!deployWorkflow.includes('cron: "0 0 * * *"')) {
+  failures.push("The deploy workflow is not scheduled at midnight.");
 }
 
 if (!deployWorkflow.includes("submodules: true")) {
