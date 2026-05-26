@@ -34,3 +34,13 @@ controls the turbine blade animation speed.
 
 - `Reset` restores the default scene state.
 - `Random` picks random values from each option.
+
+## Local Meteocons
+
+The option icons come from the npm package `@meteocons/svg`. Run `npm install`
+to install dependencies and sync the referenced fill-style SVGs into
+`assets/icons/meteocons`.
+
+After adding or removing `data-meteocon` values in `index.html`, run
+`npm run sync:meteocons`. `npm test` verifies that every referenced icon exists
+locally and that the app is not using the hosted Meteocons CDN.
