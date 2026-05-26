@@ -275,6 +275,19 @@
         <img data-layer="fog" src="assets/images/fog/default.png" alt="">
       </div>
     </section>
+
+    <section class="weather-timeline" aria-label="Weather timeline" hidden>
+      <button class="timeline-play" type="button" data-weather-play aria-label="Play weather timeline">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path data-weather-play-icon d="M8 5v14l11-7z" />
+        </svg>
+      </button>
+      <label class="timeline-range-label">
+        <span class="sr-only">Weather timeline point</span>
+        <input type="range" data-weather-range min="0" max="0" value="0" step="1">
+      </label>
+      <output class="timeline-time" data-weather-output aria-live="polite"></output>
+    </section>
   </main>
 
   <script src="assets/js/weather.js"></script>
