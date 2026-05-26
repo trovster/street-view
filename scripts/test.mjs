@@ -1,22 +1,15 @@
-import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import {
-  deriveScene,
-  moonIllumination,
-  normaliseWeatherPoint,
-  weatherConfig,
-} from "./weather-mapping.mjs";
 
 const html = readFileSync("index.html", "utf8");
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
 const weatherJs = readFileSync("assets/js/weather.js", "utf8");
 const weatherCss = readFileSync("assets/css/weather.css", "utf8");
 const gitignore = readFileSync(".gitignore", "utf8");
+const gitmodules = existsSync(".gitmodules") ? readFileSync(".gitmodules", "utf8") : "";
 const deployWorkflow = readFileSync(".github/workflows/deploy.yml", "utf8");
 const iconDirectory = "assets/icons/meteocons";
 const weatherFetchScript = "scripts/fetch-weather-data.mjs";
-const weatherFetchJs = existsSync(weatherFetchScript) ? readFileSync(weatherFetchScript, "utf8") : "";
 const icons = [
   ...new Set(
     [...html.matchAll(/data-meteocon="([^"]+)"/g)].map((match) => match[1]),
@@ -24,177 +17,6 @@ const icons = [
 ].sort();
 
 const failures = [];
-
-function assertDeepEqual(actual, expected, message) {
-  try {
-    assert.deepEqual(actual, expected);
-  } catch (error) {
-    failures.push(`${message}: ${error.message}`);
-  }
-}
-
-function assertEqual(actual, expected, message) {
-  try {
-    assert.equal(actual, expected);
-  } catch (error) {
-    failures.push(`${message}: ${error.message}`);
-  }
-}
-
-function samplePoint(overrides = {}) {
-  return {
-    time: "2026-05-26T12:00",
-    weather_code: 0,
-    cloud_cover: 10,
-    precipitation: 0,
-    rain: 0,
-    snowfall: 0,
-    snow_depth: 0,
-    wind_speed_10m: 4,
-    wind_gusts_10m: 6,
-    visibility: 20000,
-    is_day: 1,
-    ...overrides,
-  };
-}
-
-function sampleAstronomy(overrides = {}) {
-  return {
-    sunrise: "2026-05-26T04:45",
-    sunset: "2026-05-26T21:14",
-    ...overrides,
-  };
-}
-
-assertDeepEqual(
-  deriveScene(samplePoint(), sampleAstronomy()),
-  {
-    baseLayer: "default",
-    scene: "day",
-    clouds: "none",
-    rain: "none",
-    snow: "none",
-    wind: "none",
-    fog: false,
-  },
-  "Clear day maps to a default day scene",
-);
-
-assertEqual(
-  deriveScene(
-    samplePoint({ time: "2026-05-26T03:50", is_day: 0 }),
-    sampleAstronomy(),
-  ).scene,
-  "sunrise",
-  "Times within the one-hour sunrise leeway map to sunrise",
-);
-
-assertEqual(
-  deriveScene(
-    samplePoint({ time: "2026-05-26T22:10", is_day: 0 }),
-    sampleAstronomy(),
-  ).scene,
-  "sunset",
-  "Times within the one-hour sunset leeway map to sunset",
-);
-
-assertDeepEqual(
-  deriveScene(
-    samplePoint({
-      weather_code: 61,
-      cloud_cover: 82,
-      precipitation: 0.7,
-      rain: 0.7,
-      wind_speed_10m: 18,
-    }),
-    sampleAstronomy(),
-  ),
-  {
-    baseLayer: "default",
-    scene: "day",
-    clouds: "many",
-    rain: "light",
-    snow: "none",
-    wind: "light",
-    fog: false,
-  },
-  "Rain, clouds, and wind map to visible weather layers",
-);
-
-assertDeepEqual(
-  deriveScene(
-    samplePoint({
-      weather_code: 75,
-      snowfall: 1.2,
-      snow_depth: 0.021,
-    }),
-    sampleAstronomy(),
-  ),
-  {
-    baseLayer: "snow",
-    scene: "day",
-    clouds: "none",
-    rain: "none",
-    snow: "heavy",
-    wind: "none",
-    fog: false,
-  },
-  "Heavy active snow and settled snow map to snow overlay and base layer",
-);
-
-assertEqual(
-  deriveScene(samplePoint({ weather_code: 45, visibility: 800 }), sampleAstronomy()).fog,
-  true,
-  "Fog weather codes or low visibility enable fog",
-);
-
-assertEqual(
-  deriveScene(
-    samplePoint({ wind_speed_10m: 28, wind_gusts_10m: 48 }),
-    sampleAstronomy(),
-  ).wind,
-  "strong",
-  "Strong gusts enable strong wind",
-);
-
-assertEqual(
-  deriveScene(
-    samplePoint({ time: "2000-01-21T18:00:00Z", is_day: 0 }),
-    sampleAstronomy({
-      sunrise: "2000-01-21T08:00:00Z",
-      sunset: "2000-01-21T16:00:00Z",
-    }),
-  ).scene,
-  "night-full",
-  "Night points with moon illumination at least half use the full moon layer",
-);
-
-assertEqual(
-  deriveScene(
-    samplePoint({ time: "2000-01-06T18:00:00Z", is_day: 0 }),
-    sampleAstronomy({
-      sunrise: "2000-01-06T08:00:00Z",
-      sunset: "2000-01-06T16:00:00Z",
-    }),
-  ).scene,
-  "night-half",
-  "Night points with moon illumination below half use the crescent moon layer",
-);
-
-const normalisedPoint = normaliseWeatherPoint(samplePoint(), sampleAstronomy());
-
-assertEqual(normalisedPoint.source, "open-meteo", "Normalised points include the data source");
-assertEqual(normalisedPoint.raw.weather_code, 0, "Normalised points preserve raw weather values");
-assertEqual(
-  weatherConfig.sunriseSunsetLeewayMinutes,
-  60,
-  "Sunrise and sunset leeway is one hour either side",
-);
-assertEqual(
-  typeof moonIllumination(new Date("2000-01-21T18:00:00Z")),
-  "number",
-  "Moon illumination returns a numeric value",
-);
 
 if (weatherJs.includes("basmilius.github.io/meteocons")) {
   failures.push("weather.js still references the hosted Meteocons CDN.");
@@ -216,8 +38,8 @@ if (!html.includes("timeline-time") || html.includes('class="sr-only" data-weath
   failures.push("The weather timeline does not show a visible day/time output below the range.");
 }
 
-if (!weatherJs.includes("data/index.json")) {
-  failures.push("weather.js does not load data/index.json.");
+if (!weatherJs.includes("street-view-data/data/index.json")) {
+  failures.push("weather.js does not load the street-view-data manifest.");
 }
 
 if (!weatherJs.includes("stopTimelinePlayback()")) {
@@ -252,7 +74,7 @@ if (!weatherCss.includes(".popover-actions") || !weatherCss.includes("grid-templ
   failures.push("The info and original image buttons are not grouped side by side.");
 }
 
-if (!weatherCss.includes(".original-content") || !weatherCss.includes("place-items: center")) {
+if (!weatherCss.includes(".original-photo") || !weatherCss.includes("place-items: center")) {
   failures.push("The original image popover does not center its image content.");
 }
 
@@ -260,7 +82,7 @@ if (!weatherCss.includes("width: fit-content") || !weatherCss.includes("max-widt
   failures.push("The original image popover does not shrink-wrap to the contained image width.");
 }
 
-if (!weatherCss.includes("@media (min-width: 800px)") || !weatherCss.includes("bottom: max(28px, calc(env(safe-area-inset-bottom) + 28px))")) {
+if (!weatherCss.includes("@media (min-width: 890px)") || !weatherCss.includes("bottom: max(28px, calc(env(safe-area-inset-bottom) + 28px))")) {
   failures.push("The about button does not move beside the timeline when there is enough horizontal space.");
 }
 
@@ -278,53 +100,61 @@ if (!ignoredPaths.includes(`${iconDirectory}/`) && !ignoredPaths.includes("asset
   failures.push(`${iconDirectory}/ is not ignored in version control.`);
 }
 
-if (!ignoredPaths.includes("data/")) {
-  failures.push("data/ is not ignored in version control.");
+if (ignoredPaths.includes("data/")) {
+  failures.push("data/ is now a submodule and must not be ignored in this repository.");
 }
 
-if (!packageJson.scripts["fetch:weather"]) {
-  failures.push("package.json does not define fetch:weather.");
+if (packageJson.scripts["fetch:weather"]) {
+  failures.push("Weather fetching must live in the street-view-data repository, not this site repository.");
 }
 
-if (!packageJson.scripts.postinstall?.includes("sync:meteocons") || !packageJson.scripts.postinstall?.includes("fetch:weather")) {
-  failures.push("postinstall does not sync Meteocons and fetch weather data.");
+if (!packageJson.scripts.postinstall?.includes("sync:meteocons") || packageJson.scripts.postinstall?.includes("fetch:weather")) {
+  failures.push("postinstall should only sync Meteocons in this repository.");
 }
 
-if (!existsSync(weatherFetchScript)) {
-  failures.push(`${weatherFetchScript} does not exist.`);
+if (existsSync(weatherFetchScript) || existsSync("scripts/weather-mapping.mjs")) {
+  failures.push("Weather fetch and transform scripts must live in the street-view-data repository.");
 }
 
-if (weatherFetchJs && (!weatherFetchJs.includes("node:https") || weatherFetchJs.includes("await fetch("))) {
-  failures.push(`${weatherFetchScript} must use node:https instead of global fetch for Node 16 compatibility.`);
+if (!gitmodules.includes("path = street-view-data") || !gitmodules.includes("street-view-data.git")) {
+  failures.push("street-view-data is not configured as the weather data submodule.");
 }
 
 if (!deployWorkflow.includes("npm ci")) {
   failures.push("The deploy workflow does not install npm dependencies.");
 }
 
-if (!deployWorkflow.includes('cron: "0 0 * * *"')) {
-  failures.push("The deploy workflow is not scheduled once a day at midnight.");
+if (!deployWorkflow.includes('cron: "15 * * * *"')) {
+  failures.push("The deploy workflow is not scheduled hourly after the data fetch workflow.");
 }
 
-const fetchWeatherIndex = deployWorkflow.indexOf("npm run fetch:weather -- --strict");
-const testIndex = deployWorkflow.indexOf("npm test");
-
-if (fetchWeatherIndex === -1) {
-  failures.push("The deploy workflow does not run a strict weather fetch.");
-} else if (testIndex === -1 || fetchWeatherIndex > testIndex) {
-  failures.push("The deploy workflow does not fetch weather data before tests.");
+if (!deployWorkflow.includes("submodules: true")) {
+  failures.push("The deploy workflow does not check out the data submodule.");
 }
 
-if (existsSync("data/index.json")) {
-  const manifest = JSON.parse(readFileSync("data/index.json", "utf8"));
+if (!deployWorkflow.includes("git submodule update --remote street-view-data")) {
+  failures.push("The deploy workflow does not update the data submodule to the latest remote data.");
+}
+
+if (deployWorkflow.includes("npm run fetch:weather")) {
+  failures.push("The deploy workflow must not fetch or transform weather data in this repository.");
+}
+
+if (existsSync("street-view-data/data/index.json")) {
+  const manifest = JSON.parse(readFileSync("street-view-data/data/index.json", "utf8"));
 
   if (!Array.isArray(manifest.points) || manifest.points.length !== 192) {
-    failures.push("data/index.json does not contain exactly 192 weather points.");
+    failures.push("street-view-data/data/index.json does not contain exactly 192 weather points.");
   } else {
-    const missingPointFiles = manifest.points.filter((point) => !existsSync(join("data", point.file)));
+    const missingPointFiles = manifest.points.filter((point) => !existsSync(join("street-view-data/data", point.file)));
+    const flatPointFiles = manifest.points.filter((point) => !/^\d{4}\/\d{2}\/\d{2}\/\d{4}-\d{2}-\d{2}T\d{2}-\d{2}\.json$/.test(point.file));
 
     if (missingPointFiles.length > 0) {
-      failures.push(`data/index.json references missing point files: ${missingPointFiles.map((point) => point.file).join(", ")}.`);
+      failures.push(`street-view-data/data/index.json references missing point files: ${missingPointFiles.map((point) => point.file).join(", ")}.`);
+    }
+
+    if (flatPointFiles.length > 0) {
+      failures.push(`street-view-data/data/index.json includes non-nested point files: ${flatPointFiles.map((point) => point.file).join(", ")}.`);
     }
   }
 }

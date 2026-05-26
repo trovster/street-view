@@ -44,3 +44,14 @@ to install dependencies and sync the referenced fill-style SVGs into
 After adding or removing `data-meteocon` values in `index.html`, run
 `npm run sync:meteocons`. `npm test` verifies that every referenced icon exists
 locally and that the app is not using the hosted Meteocons CDN.
+
+## Weather Data
+
+Weather data is provided by the `street-view-data` submodule, which points at
+`trovster/street-view-data`. That repository fetches Open-Meteo responses every
+hour, stores originals under `originals/`, and writes transformed scene data
+under `data/`.
+
+This site reads `street-view-data/data/index.json` and the point files
+referenced by that manifest. The deploy workflow updates the submodule to the
+latest `main` before testing and publishing.

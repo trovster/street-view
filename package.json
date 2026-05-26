@@ -2,8 +2,7 @@
   "name": "street-view",
   "private": true,
   "scripts": {
-    "postinstall": "npm run sync:meteocons && npm run fetch:weather",
-    "fetch:weather": "node scripts/fetch-weather-data.mjs",
+    "postinstall": "npm run sync:meteocons",
     "sync:meteocons": "node scripts/sync-meteocons.mjs",
     "test": "node scripts/test.mjs"
   },

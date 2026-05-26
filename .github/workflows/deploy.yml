@@ -6,7 +6,7 @@ on:
       - main
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "15 * * * *"
 
 permissions:
   contents: read
@@ -28,6 +28,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          submodules: true
 
       - name: Setup Node
         uses: actions/setup-node@v6
@@ -38,8 +40,8 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Fetch weather data
-        run: npm run fetch:weather -- --strict
+      - name: Update weather data
+        run: git submodule update --remote street-view-data
 
       - name: Test
         run: npm test

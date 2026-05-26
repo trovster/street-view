@@ -1,0 +1,4 @@
+[submodule "data"]
+	path = street-view-data
+	url = https://github.com/trovster/street-view-data.git
+	branch = main
