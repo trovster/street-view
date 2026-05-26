@@ -224,6 +224,10 @@ if (!weatherJs.includes("stopTimelinePlayback()")) {
   failures.push("weather.js does not stop timeline playback at the latest point.");
 }
 
+if (!weatherJs.includes('stage.classList.add("is-weather-playback")') || !weatherJs.includes('stage.classList.remove("is-weather-playback")')) {
+  failures.push("weather.js does not scope layer fades to active weather playback.");
+}
+
 if (!weatherJs.includes("formatTimelineTime")) {
   failures.push("weather.js does not format the visible timeline day/time.");
 }
@@ -238,6 +242,10 @@ if (!weatherCss.includes("@media (min-width: 800px)") || !weatherCss.includes("b
 
 if (!weatherCss.includes("@media (max-height: 720px)") || !weatherCss.includes("padding: 0 0 max(92px, calc(env(safe-area-inset-bottom) + 92px))")) {
   failures.push("Stage bottom padding is not limited to shallow screens.");
+}
+
+if (!weatherCss.includes(".stage.is-weather-playback img") || !weatherCss.includes(".stage.is-weather-playback img.is-hidden")) {
+  failures.push("Layer opacity transitions are not scoped to active weather playback.");
 }
 
 const ignoredPaths = gitignore.split(/\r?\n/);

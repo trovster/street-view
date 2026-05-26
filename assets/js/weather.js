@@ -234,8 +234,15 @@ async function startTimelinePlayback() {
     return;
   }
 
+  stage.classList.add("is-weather-playback");
+
   if (timelineState.currentIndex >= timelineState.points.length - 1) {
-    await selectTimelinePoint(0);
+    try {
+      await selectTimelinePoint(0);
+    } catch {
+      stopTimelinePlayback();
+      return;
+    }
   }
 
   timelineState.interval = window.setInterval(advanceTimelinePlayback, timelinePlaybackDelay);
@@ -251,6 +258,7 @@ function stopTimelinePlayback() {
 
   timelinePlayButton?.setAttribute("aria-label", "Play weather timeline");
   timelinePlayIcon?.setAttribute("d", playIconPath);
+  stage.classList.remove("is-weather-playback");
 }
 
 async function advanceTimelinePlayback() {

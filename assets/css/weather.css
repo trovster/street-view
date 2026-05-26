@@ -473,6 +473,19 @@ button:hover {
   display: none;
 }
 
+.stage.is-weather-playback img {
+  opacity: 1;
+  transition:
+    opacity 260ms ease,
+    visibility 260ms ease;
+}
+
+.stage.is-weather-playback img.is-hidden {
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+}
+
 .weather-timeline {
   align-items: center;
   backdrop-filter: blur(10px);
@@ -544,6 +557,12 @@ button:hover {
 @media (max-height: 720px) {
   .stage-wrap {
     padding: 0 0 max(92px, calc(env(safe-area-inset-bottom) + 92px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage.is-weather-playback img {
+    transition: none;
   }
 }
 
