@@ -1,9 +1,25 @@
 const form = document.querySelector("#weather-form");
 const stage = document.querySelector(".stage");
+const timeline = document.querySelector(".weather-timeline");
+const timelinePlayButton = document.querySelector("[data-weather-play]");
+const timelinePlayIcon = document.querySelector("[data-weather-play-icon]");
+const timelineRange = document.querySelector("[data-weather-range]");
+const timelineOutput = document.querySelector("[data-weather-output]");
 const meteoconIconBaseUrl = "assets/icons/meteocons/";
+const weatherDataIndexUrl = "data/index.json";
+const timelinePlaybackDelay = 200;
+const playIconPath = "M8 5v14l11-7z";
+const pauseIconPath = "M8 5h3v14H8zM13 5h3v14h-3z";
 const layers = new Map(
   Array.from(document.querySelectorAll("[data-layer]")).map((layer) => [layer.dataset.layer, layer])
 );
+const timelineState = {
+  currentIndex: 0,
+  interval: null,
+  manifest: null,
+  points: [],
+  pointCache: new Map(),
+};
 
 const scenes = {
   day: {
@@ -22,7 +38,7 @@ const scenes = {
     sky: "sky-sunset",
     object: "none",
     stars: "few",
-    lighting: false,
+    lighting: true,
   },
   "night-full": {
     sky: "sky-night",
@@ -94,15 +110,27 @@ function updateScene() {
   stage.classList.toggle("wind-strong", wind === "strong");
 }
 
-function resetScene() {
-  form.elements.baseLayer.value = "default";
-  form.elements.scene.value = "day";
-  form.elements.clouds.value = "few";
-  form.elements.rain.value = "none";
-  form.elements.snow.value = "none";
-  form.elements.wind.value = "none";
-  form.elements.fog.checked = false;
+function applyScene(scene) {
+  form.elements.baseLayer.value = scene.baseLayer;
+  form.elements.scene.value = scene.scene;
+  form.elements.clouds.value = scene.clouds;
+  form.elements.rain.value = scene.rain;
+  form.elements.snow.value = scene.snow;
+  form.elements.wind.value = scene.wind;
+  form.elements.fog.checked = Boolean(scene.fog);
   updateScene();
+}
+
+function resetScene() {
+  applyScene({
+    baseLayer: "default",
+    scene: "day",
+    clouds: "few",
+    rain: "none",
+    snow: "none",
+    wind: "none",
+    fog: false,
+  });
 }
 
 function optionValues(control) {
@@ -119,18 +147,167 @@ function randomOptionValue(control) {
 }
 
 function randomScene() {
-  form.elements.baseLayer.value = "default";
-  form.elements.scene.value = randomOptionValue(form.elements.scene);
-  form.elements.clouds.value = randomOptionValue(form.elements.clouds);
-  form.elements.rain.value = randomOptionValue(form.elements.rain);
-  form.elements.snow.value = randomOptionValue(form.elements.snow);
-  form.elements.wind.value = randomOptionValue(form.elements.wind);
-  form.elements.fog.checked = Math.random() < 0.25;
-  updateScene();
+  applyScene({
+    baseLayer: "default",
+    scene: randomOptionValue(form.elements.scene),
+    clouds: randomOptionValue(form.elements.clouds),
+    rain: randomOptionValue(form.elements.rain),
+    snow: randomOptionValue(form.elements.snow),
+    wind: randomOptionValue(form.elements.wind),
+    fog: Math.random() < 0.25,
+  });
+}
+
+async function loadWeatherTimeline() {
+  if (!timeline || !timelinePlayButton || !timelineRange) {
+    return;
+  }
+
+  try {
+    const response = await fetch(weatherDataIndexUrl);
+
+    if (!response.ok) {
+      throw new Error("Weather manifest unavailable.");
+    }
+
+    const manifest = await response.json();
+    const points = Array.isArray(manifest.points) ? manifest.points : [];
+
+    if (points.length === 0) {
+      throw new Error("Weather manifest has no points.");
+    }
+
+    timelineState.manifest = manifest;
+    timelineState.points = points;
+    timelineState.currentIndex = points.length - 1;
+    timelineRange.max = String(points.length - 1);
+    timelineRange.value = String(timelineState.currentIndex);
+    timeline.hidden = false;
+
+    await selectTimelinePoint(timelineState.currentIndex);
+  } catch {
+    timeline.hidden = true;
+  }
+}
+
+async function selectTimelinePoint(index) {
+  const nextIndex = clamp(index, 0, timelineState.points.length - 1);
+  const pointReference = timelineState.points[nextIndex];
+
+  if (!pointReference) {
+    return;
+  }
+
+  timelineState.currentIndex = nextIndex;
+  timelineRange.value = String(nextIndex);
+
+  if (timelineOutput) {
+    const formattedTime = formatTimelineTime(pointReference.time);
+
+    timelineOutput.value = formattedTime;
+    timelineOutput.textContent = formattedTime;
+  }
+
+  const point = await fetchTimelinePoint(pointReference);
+  applyScene(point.scene);
+}
+
+async function fetchTimelinePoint(pointReference) {
+  if (timelineState.pointCache.has(pointReference.file)) {
+    return timelineState.pointCache.get(pointReference.file);
+  }
+
+  const response = await fetch(new URL(pointReference.file, new URL(weatherDataIndexUrl, window.location.href)));
+
+  if (!response.ok) {
+    throw new Error(`Weather point unavailable: ${pointReference.file}`);
+  }
+
+  const point = await response.json();
+  timelineState.pointCache.set(pointReference.file, point);
+
+  return point;
+}
+
+async function startTimelinePlayback() {
+  if (timelineState.interval || timelineState.points.length === 0) {
+    return;
+  }
+
+  if (timelineState.currentIndex >= timelineState.points.length - 1) {
+    await selectTimelinePoint(0);
+  }
+
+  timelineState.interval = window.setInterval(advanceTimelinePlayback, timelinePlaybackDelay);
+  timelinePlayButton.setAttribute("aria-label", "Pause weather timeline");
+  timelinePlayIcon?.setAttribute("d", pauseIconPath);
+}
+
+function stopTimelinePlayback() {
+  if (timelineState.interval) {
+    window.clearInterval(timelineState.interval);
+    timelineState.interval = null;
+  }
+
+  timelinePlayButton?.setAttribute("aria-label", "Play weather timeline");
+  timelinePlayIcon?.setAttribute("d", playIconPath);
+}
+
+async function advanceTimelinePlayback() {
+  if (timelineState.currentIndex >= timelineState.points.length - 1) {
+    stopTimelinePlayback();
+    return;
+  }
+
+  try {
+    await selectTimelinePoint(timelineState.currentIndex + 1);
+  } catch {
+    stopTimelinePlayback();
+  }
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(Number(value), min), max);
+}
+
+function formatTimelineTime(time) {
+  const match = time.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+
+  if (!match) {
+    return time;
+  }
+
+  const [, year, month, day, hour, minute] = match.map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, hour, minute));
+
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: "UTC",
+  }).format(date);
 }
 
 form.addEventListener("input", updateScene);
 form.querySelector("[data-reset-scene]").addEventListener("click", resetScene);
 form.querySelector("[data-random-scene]").addEventListener("click", randomScene);
+timelinePlayButton?.addEventListener("click", () => {
+  if (timelineState.interval) {
+    stopTimelinePlayback();
+    return;
+  }
+
+  startTimelinePlayback();
+});
+timelineRange?.addEventListener("input", () => {
+  stopTimelinePlayback();
+  selectTimelinePoint(timelineRange.value).catch(() => {
+    timeline.hidden = true;
+  });
+});
 loadMeteoconIcons();
 updateScene();
+loadWeatherTimeline();
