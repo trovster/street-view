@@ -1,0 +1,326 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #d8e8f2;
+  color: #182025;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+main {
+  background: #d8e8f2;
+  display: grid;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  place-items: center;
+  position: relative;
+}
+
+#weather-form {
+  align-content: start;
+  background: #f8f9f7;
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+}
+
+#weather-form[popover] {
+  border: 0;
+  border-left: 1px solid #d8dedb;
+  box-shadow: -18px 0 48px rgba(21, 28, 32, 0.24);
+  height: 100vh;
+  height: 100dvh;
+  inset: 0 0 0 auto;
+  margin: 0;
+  max-height: none;
+  opacity: 0;
+  overflow: auto;
+  transform: translateX(100%);
+  transition:
+    transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 180ms ease,
+    overlay 260ms allow-discrete,
+    display 260ms allow-discrete;
+  width: min(390px, calc(100vw - 24px));
+}
+
+#weather-form[popover]:popover-open {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+#weather-form[popover]::backdrop {
+  background: rgba(12, 18, 22, 0.38);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  transition:
+    opacity 180ms ease,
+    overlay 260ms allow-discrete,
+    display 260ms allow-discrete;
+}
+
+#weather-form[popover]:popover-open::backdrop {
+  opacity: 1;
+}
+
+@starting-style {
+  #weather-form[popover]:popover-open {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  #weather-form[popover]:popover-open::backdrop {
+    opacity: 0;
+  }
+}
+
+h1 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.panel-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+fieldset {
+  border: 1px solid #d8dedb;
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 16px;
+}
+
+legend {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0 6px;
+  text-transform: uppercase;
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+label[hidden] {
+  display: none;
+}
+
+select {
+  appearance: none;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23314046' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border: 1px solid #b9c2bf;
+  border-radius: 7px;
+  color: #182025;
+  font: inherit;
+  min-height: 42px;
+  padding: 8px 42px 8px 11px;
+  width: 100%;
+}
+
+.check {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  min-height: 34px;
+}
+
+.check input {
+  accent-color: #2f6c57;
+  height: 18px;
+  margin: 0;
+  width: 18px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+button {
+  align-items: center;
+  background: #182025;
+  border: 0;
+  border-radius: 7px;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 700;
+  gap: 8px;
+  justify-content: center;
+  min-height: 42px;
+  padding: 9px 16px;
+}
+
+button svg,
+.options-trigger svg {
+  fill: none;
+  height: 18px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  width: 18px;
+}
+
+button:hover {
+  background: #314046;
+}
+
+.options-trigger {
+  backdrop-filter: blur(10px);
+  background: rgba(24, 32, 37, 0.88);
+  box-shadow: 0 12px 30px rgba(21, 28, 32, 0.18);
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  top: max(16px, env(safe-area-inset-top));
+  z-index: 2;
+}
+
+.button-icon {
+  background: #eef1f2;
+  border: 1px solid #d8dedb;
+  color: #182025;
+  min-height: 38px;
+  padding: 0;
+  width: 38px;
+}
+
+.button-icon:hover {
+  background: #e3e9e6;
+}
+
+.button-reset {
+  background: #7b372f;
+}
+
+.button-reset:hover {
+  background: #95483d;
+}
+
+.stage-wrap {
+  align-items: center;
+  display: grid;
+  height: 100vh;
+  height: 100dvh;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+  place-items: center;
+  width: 100vw;
+}
+
+.stage {
+  aspect-ratio: 1672 / 940;
+  background: #d8e8f2;
+  height: min(100vh, calc(100vw * 940 / 1672));
+  height: min(100dvh, calc(100vw * 940 / 1672));
+  overflow: hidden;
+  position: relative;
+  width: min(100vw, calc(100vh * 1672 / 940));
+  width: min(100vw, calc(100dvh * 1672 / 940));
+}
+
+.stage img {
+  height: 100%;
+  inset: 0;
+  object-fit: contain;
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+}
+
+.stage .sky-object {
+  height: auto;
+  inset: auto;
+  object-fit: contain;
+  width: clamp(46px, 7%, 112px);
+}
+
+.stage .sun-full {
+  left: 50%;
+  top: 8%;
+  transform: translateX(-50%);
+}
+
+.stage .sun-top-half {
+  left: 50%;
+  top: 26%;
+  transform: translateX(-50%);
+  width: clamp(58px, 8%, 132px);
+}
+
+.stage .moon-full,
+.stage .moon-crescent {
+  right: 9%;
+  top: 8%;
+  width: clamp(44px, 6.5%, 104px);
+}
+
+.stage .wind-turbine-blades {
+  transform-origin: 56.4% 28%;
+  will-change: transform;
+}
+
+.stage.wind-light .wind-turbine-blades:not(.is-hidden) {
+  animation: turbine-spin 7500ms linear infinite;
+}
+
+.stage.wind-strong .wind-turbine-blades:not(.is-hidden) {
+  animation: turbine-spin 2500ms linear infinite;
+}
+
+@keyframes turbine-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage .wind-turbine-blades {
+    animation: none !important;
+  }
+}
+
+.is-hidden {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  #weather-form[popover] {
+    width: min(380px, calc(100vw - 16px));
+  }
+}
+
+@media (max-width: 640px) {
+  #weather-form {
+    padding: 18px;
+  }
+
+  #weather-form[popover] {
+    border-left: 0;
+    width: 100vw;
+  }
+}
