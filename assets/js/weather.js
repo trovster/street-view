@@ -1,5 +1,6 @@
 const form = document.querySelector("#weather-form");
 const stage = document.querySelector(".stage");
+const meteoconIconBaseUrl = "https://basmilius.github.io/meteocons/production/fill/svg/";
 const layers = new Map(
   Array.from(document.querySelectorAll("[data-layer]")).map((layer) => [layer.dataset.layer, layer])
 );
@@ -43,6 +44,12 @@ function setLayer(name, isVisible) {
 
 function showOnly(group, active) {
   group.forEach((name) => setLayer(name, name === active));
+}
+
+function loadMeteoconIcons() {
+  document.querySelectorAll("[data-meteocon]").forEach((icon) => {
+    icon.src = `${meteoconIconBaseUrl}${icon.dataset.meteocon}.svg`;
+  });
 }
 
 function updateScene() {
@@ -98,9 +105,17 @@ function resetScene() {
   updateScene();
 }
 
-function randomOptionValue(select) {
-  const options = Array.from(select.options);
-  return options[Math.floor(Math.random() * options.length)].value;
+function optionValues(control) {
+  if (control.options) {
+    return Array.from(control.options).map((option) => option.value);
+  }
+
+  return Array.from(control).map((option) => option.value);
+}
+
+function randomOptionValue(control) {
+  const values = optionValues(control);
+  return values[Math.floor(Math.random() * values.length)];
 }
 
 function randomScene() {
@@ -117,4 +132,5 @@ function randomScene() {
 form.addEventListener("input", updateScene);
 form.querySelector("[data-reset-scene]").addEventListener("click", resetScene);
 form.querySelector("[data-random-scene]").addEventListener("click", randomScene);
+loadMeteoconIcons();
 updateScene();
