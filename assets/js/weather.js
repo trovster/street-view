@@ -125,7 +125,7 @@ function randomScene() {
   form.elements.rain.value = randomOptionValue(form.elements.rain);
   form.elements.snow.value = randomOptionValue(form.elements.snow);
   form.elements.wind.value = randomOptionValue(form.elements.wind);
-  form.elements.fog.checked = Math.random() < 0.5;
+  form.elements.fog.checked = Math.random() < 0.25;
   updateScene();
 }
 

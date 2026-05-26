@@ -212,16 +212,6 @@ select {
   overflow-wrap: anywhere;
 }
 
-.option-choice--toggle .option-choice__body {
-  grid-template-columns: 34px minmax(0, 1fr);
-  min-height: 54px;
-}
-
-.option-choice--toggle .option-choice__icon {
-  height: 34px;
-  width: 34px;
-}
-
 .form-actions {
   display: flex;
   justify-content: space-between;

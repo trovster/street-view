@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 const html = readFileSync("index.html", "utf8");
 const weatherJs = readFileSync("assets/js/weather.js", "utf8");
+const weatherCss = readFileSync("assets/css/weather.css", "utf8");
 const gitignore = readFileSync(".gitignore", "utf8");
 const deployWorkflow = readFileSync(".github/workflows/deploy.yml", "utf8");
 const iconDirectory = "assets/icons/meteocons";
@@ -47,4 +48,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`Verified ${icons.length} locally managed Meteocons SVGs.`);
+console.log("Passed.");
