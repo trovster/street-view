@@ -5,6 +5,7 @@ const timelinePlayButton = document.querySelector("[data-weather-play]");
 const timelinePlayIcon = document.querySelector("[data-weather-play-icon]");
 const timelineRange = document.querySelector("[data-weather-range]");
 const timelineOutput = document.querySelector("[data-weather-output]");
+const popovers = Array.from(document.querySelectorAll("[popover]"));
 const meteoconIconBaseUrl = "assets/icons/meteocons/";
 const weatherDataIndexUrl = "street-view-data/data/index.json";
 const timelinePlaybackDelay = 200;
@@ -17,8 +18,10 @@ const timelineState = {
   currentIndex: 0,
   interval: null,
   manifest: null,
+  openPopovers: new Set(),
   points: [],
   pointCache: new Map(),
+  resumeAfterPopoverCloses: false,
 };
 
 const scenes = {
@@ -304,9 +307,34 @@ function handleManualSceneInput() {
   updateScene();
 }
 
+function handlePopoverToggle(event) {
+  const popover = event.currentTarget;
+
+  if (event.newState === "open") {
+    timelineState.openPopovers.add(popover);
+
+    if (timelineState.interval) {
+      timelineState.resumeAfterPopoverCloses = true;
+      stopTimelinePlayback();
+    }
+
+    return;
+  }
+
+  if (event.newState === "closed") {
+    timelineState.openPopovers.delete(popover);
+
+    if (timelineState.openPopovers.size === 0 && timelineState.resumeAfterPopoverCloses) {
+      timelineState.resumeAfterPopoverCloses = false;
+      startTimelinePlayback();
+    }
+  }
+}
+
 form.addEventListener("input", handleManualSceneInput);
 form.querySelector("[data-reset-scene]").addEventListener("click", resetScene);
 form.querySelector("[data-random-scene]").addEventListener("click", randomScene);
+popovers.forEach((popover) => popover.addEventListener("toggle", handlePopoverToggle));
 timelinePlayButton?.addEventListener("click", () => {
   if (timelineState.interval) {
     stopTimelinePlayback();

@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import vm from "node:vm";
 
 const html = readFileSync("index.html", "utf8");
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
@@ -17,6 +18,285 @@ const icons = [
 ].sort();
 
 const failures = [];
+
+class FakeClassList {
+  constructor() {
+    this.classes = new Set();
+  }
+
+  add(...names) {
+    names.forEach((name) => this.classes.add(name));
+  }
+
+  remove(...names) {
+    names.forEach((name) => this.classes.delete(name));
+  }
+
+  toggle(name, force) {
+    const shouldAdd = force ?? !this.classes.has(name);
+
+    if (shouldAdd) {
+      this.classes.add(name);
+    } else {
+      this.classes.delete(name);
+    }
+
+    return shouldAdd;
+  }
+
+  contains(name) {
+    return this.classes.has(name);
+  }
+}
+
+class FakeElement {
+  constructor({ dataset = {}, value = "", checked = false } = {}) {
+    this.attributes = new Map();
+    this.checked = checked;
+    this.classList = new FakeClassList();
+    this.dataset = dataset;
+    this.hidden = false;
+    this.listeners = new Map();
+    this.queryResults = new Map();
+    this.src = "";
+    this.textContent = "";
+    this.value = value;
+  }
+
+  addEventListener(type, listener) {
+    const listeners = this.listeners.get(type) ?? [];
+
+    listeners.push(listener);
+    this.listeners.set(type, listeners);
+  }
+
+  dispatchEvent(event) {
+    const eventWithTarget = {
+      ...event,
+      currentTarget: this,
+      target: event.target ?? this,
+    };
+
+    (this.listeners.get(event.type) ?? []).forEach((listener) => listener.call(this, eventWithTarget));
+  }
+
+  click() {
+    this.dispatchEvent({ type: "click" });
+  }
+
+  querySelector(selector) {
+    return this.queryResults.get(selector) ?? null;
+  }
+
+  setAttribute(name, value) {
+    this.attributes.set(name, String(value));
+  }
+}
+
+class FakeFormData {
+  constructor(form) {
+    this.values = new Map(
+      Object.entries(form.elements)
+        .filter(([, element]) => element.type !== "checkbox" || element.checked)
+        .map(([name, element]) => [name, element.value]),
+    );
+  }
+
+  get(name) {
+    return this.values.get(name);
+  }
+
+  has(name) {
+    return this.values.has(name);
+  }
+}
+
+function createWeatherHarness() {
+  const activeIntervals = new Set();
+  const form = new FakeElement();
+  const stage = new FakeElement();
+  const timeline = new FakeElement();
+  const timelinePlayButton = new FakeElement();
+  const timelinePlayIcon = new FakeElement();
+  const timelineRange = new FakeElement({ value: "0" });
+  const timelineOutput = new FakeElement();
+  const resetButton = new FakeElement();
+  const randomButton = new FakeElement();
+  const popovers = [new FakeElement(), new FakeElement(), new FakeElement()];
+  const layerNames = [
+    "sky-day",
+    "sky-sunrise",
+    "sky-sunset",
+    "sky-night",
+    "sun-full",
+    "sun-top-half",
+    "moon-full",
+    "moon-crescent",
+    "stars-few",
+    "stars-many",
+    "clouds-few",
+    "clouds-many",
+    "rain-light",
+    "rain-heavy",
+    "snow-light",
+    "snow-heavy",
+    "wind-light-clouds-few",
+    "wind-light-clouds-many",
+    "wind-strong-clouds-few",
+    "wind-strong-clouds-many",
+    "fog",
+    "turbine",
+    "turbine-blades",
+    "lighting",
+    "wet-road",
+    "base",
+    "base-snow",
+  ];
+  const layers = layerNames.map((name) => new FakeElement({ dataset: { layer: name } }));
+  const icons = [new FakeElement({ dataset: { meteocon: "clear-day" } })];
+  const points = [
+    { time: "2026-05-26T00:00", file: "2026/05/26/2026-05-26T00-00.json" },
+    { time: "2026-05-26T00:15", file: "2026/05/26/2026-05-26T00-15.json" },
+  ];
+  let intervalId = 0;
+
+  form.elements = {
+    baseLayer: new FakeElement({ value: "default" }),
+    scene: new FakeElement({ value: "day" }),
+    clouds: new FakeElement({ value: "few" }),
+    rain: new FakeElement({ value: "none" }),
+    snow: new FakeElement({ value: "none" }),
+    wind: new FakeElement({ value: "none" }),
+    fog: new FakeElement({ checked: false, value: "on" }),
+  };
+  form.elements.fog.type = "checkbox";
+  form.queryResults.set("[data-reset-scene]", resetButton);
+  form.queryResults.set("[data-random-scene]", randomButton);
+
+  const document = {
+    querySelector(selector) {
+      return new Map([
+        ["#weather-form", form],
+        [".stage", stage],
+        [".weather-timeline", timeline],
+        ["[data-weather-play]", timelinePlayButton],
+        ["[data-weather-play-icon]", timelinePlayIcon],
+        ["[data-weather-range]", timelineRange],
+        ["[data-weather-output]", timelineOutput],
+      ]).get(selector) ?? null;
+    },
+    querySelectorAll(selector) {
+      return new Map([
+        ["[data-layer]", layers],
+        ["[data-meteocon]", icons],
+        ["[popover]", popovers],
+      ]).get(selector) ?? [];
+    },
+  };
+  const window = {
+    clearInterval(id) {
+      activeIntervals.delete(id);
+    },
+    location: {
+      href: "https://example.test/",
+    },
+    setInterval() {
+      intervalId += 1;
+      activeIntervals.add(intervalId);
+
+      return intervalId;
+    },
+  };
+  const context = {
+    Date,
+    Error,
+    FormData: FakeFormData,
+    Intl,
+    Math,
+    URL,
+    document,
+    fetch: async (url) => ({
+      ok: true,
+      json: async () => {
+        if (String(url).endsWith("index.json")) {
+          return { points };
+        }
+
+        return {
+          scene: {
+            baseLayer: "default",
+            scene: "day",
+            clouds: "few",
+            rain: "none",
+            snow: "none",
+            wind: "none",
+            fog: false,
+          },
+        };
+      },
+    }),
+    window,
+  };
+
+  return {
+    activeIntervalCount: () => activeIntervals.size,
+    context,
+    flushAsync: async () => {
+      for (let i = 0; i < 10; i += 1) {
+        await Promise.resolve();
+      }
+    },
+    popovers,
+    timelinePlayButton,
+  };
+}
+
+async function runPopoverPlaybackRegression() {
+  const regressionFailures = [];
+  const harness = createWeatherHarness();
+  const [, aboutPopover] = harness.popovers;
+
+  vm.runInNewContext(weatherJs, harness.context, { filename: "assets/js/weather.js" });
+  await harness.flushAsync();
+
+  harness.timelinePlayButton.click();
+  await harness.flushAsync();
+
+  if (harness.activeIntervalCount() !== 1) {
+    regressionFailures.push("Regression setup failed: the timeline did not start before opening a popover.");
+  }
+
+  aboutPopover.dispatchEvent({ type: "toggle", oldState: "closed", newState: "open" });
+
+  if (harness.activeIntervalCount() !== 0) {
+    regressionFailures.push("Opening a popover does not pause active timeline playback.");
+  }
+
+  aboutPopover.dispatchEvent({ type: "toggle", oldState: "open", newState: "closed" });
+  await harness.flushAsync();
+
+  if (harness.activeIntervalCount() !== 1) {
+    regressionFailures.push("Closing a popover does not restart timeline playback that was previously running.");
+  }
+
+  harness.timelinePlayButton.click();
+
+  if (harness.activeIntervalCount() !== 0) {
+    regressionFailures.push("Regression setup failed: the timeline did not stop before the paused-popover check.");
+  }
+
+  aboutPopover.dispatchEvent({ type: "toggle", oldState: "closed", newState: "open" });
+  aboutPopover.dispatchEvent({ type: "toggle", oldState: "open", newState: "closed" });
+  await harness.flushAsync();
+
+  if (harness.activeIntervalCount() !== 0) {
+    regressionFailures.push("Closing a popover restarts timeline playback even when it was not running before opening.");
+  }
+
+  return regressionFailures;
+}
+
+failures.push(...await runPopoverPlaybackRegression());
 
 if (weatherJs.includes("basmilius.github.io/meteocons")) {
   failures.push("weather.js still references the hosted Meteocons CDN.");
