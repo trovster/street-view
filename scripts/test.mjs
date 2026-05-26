@@ -240,6 +240,26 @@ if (!weatherCss.includes(".about-trigger") || !weatherCss.includes("top: max(16p
   failures.push("The about button is not positioned at the top left by default.");
 }
 
+if (!html.includes('popovertarget="original-photo"') || !html.includes('aria-label="View original image"')) {
+  failures.push("index.html does not include an original image popover trigger.");
+}
+
+if (!html.includes('id="original-photo"') || !html.includes('src="original.webp"') || !html.includes('aria-label="original-photo"')) {
+  failures.push("index.html does not include an original image popover with original.webp.");
+}
+
+if (!weatherCss.includes(".popover-actions") || !weatherCss.includes("grid-template-columns: repeat(2, 44px)")) {
+  failures.push("The info and original image buttons are not grouped side by side.");
+}
+
+if (!weatherCss.includes(".original-content") || !weatherCss.includes("place-items: center")) {
+  failures.push("The original image popover does not center its image content.");
+}
+
+if (!weatherCss.includes("width: fit-content") || !weatherCss.includes("max-width: calc(100vw - 32px)")) {
+  failures.push("The original image popover does not shrink-wrap to the contained image width.");
+}
+
 if (!weatherCss.includes("@media (min-width: 800px)") || !weatherCss.includes("bottom: max(28px, calc(env(safe-area-inset-bottom) + 28px))")) {
   failures.push("The about button does not move beside the timeline when there is enough horizontal space.");
 }

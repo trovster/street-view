@@ -78,7 +78,7 @@ main {
   background: #f8f9f7;
   display: grid;
   gap: 18px;
-  padding: 24px;
+  padding: 18px;
 }
 
 .about-popover[popover] {
@@ -314,21 +314,29 @@ button:hover {
   z-index: 2;
 }
 
-.about-trigger {
+.popover-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, 44px);
+  left: max(16px, env(safe-area-inset-left));
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  z-index: 2;
+}
+
+.about-trigger,
+.original-trigger {
   backdrop-filter: blur(10px);
   background: rgba(24, 32, 37, 0.88);
   border-radius: 999px;
   box-shadow: 0 12px 30px rgba(21, 28, 32, 0.18);
-  left: max(16px, env(safe-area-inset-left));
   min-height: 44px;
   padding: 0;
-  position: fixed;
-  top: max(16px, env(safe-area-inset-top));
   width: 44px;
-  z-index: 2;
 }
 
-.about-trigger:hover {
+.about-trigger:hover,
+.original-trigger:hover {
   background: #314046;
 }
 
@@ -371,6 +379,30 @@ button:hover {
 
 .about-content a:hover {
   color: #214c3e;
+}
+
+.original-popover[popover] {
+  max-width: calc(100vw - 32px);
+  width: fit-content;
+}
+
+.original-photo {
+  display: grid;
+  margin: 0 auto;
+  max-width: calc(100vw - 80px);
+  min-height: min(100px, calc(100dvh - 144px));
+  place-items: center;
+  width: fit-content;
+}
+
+.original-photo img {
+  border-radius: 6px;
+  display: block;
+  height: auto;
+  max-height: calc(100dvh - 144px);
+  max-width: min(1200px, calc(100vw - 80px));
+  width: auto;
+  object-fit: contain;
 }
 
 .sr-only {
@@ -545,8 +577,8 @@ button:hover {
   min-height: 1em;
 }
 
-@media (min-width: 800px) {
-  .about-trigger {
+@media (min-width: 890px) {
+  .popover-actions {
     bottom: max(28px, calc(env(safe-area-inset-bottom) + 28px));
     left: auto;
     right: max(16px, env(safe-area-inset-right));
