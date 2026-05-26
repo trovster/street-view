@@ -1,6 +1,6 @@
 const form = document.querySelector("#weather-form");
 const stage = document.querySelector(".stage");
-const meteoconIconBaseUrl = "https://basmilius.github.io/meteocons/production/fill/svg/";
+const meteoconIconBaseUrl = "assets/icons/meteocons/";
 const layers = new Map(
   Array.from(document.querySelectorAll("[data-layer]")).map((layer) => [layer.dataset.layer, layer])
 );
