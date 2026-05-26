@@ -278,8 +278,8 @@ if (!deployWorkflow.includes("npm ci")) {
   failures.push("The deploy workflow does not install npm dependencies.");
 }
 
-if (!deployWorkflow.includes('cron: "*/15 * * * *"')) {
-  failures.push("The deploy workflow is not scheduled every 15 minutes.");
+if (!deployWorkflow.includes('cron: "0 0 * * *"')) {
+  failures.push("The deploy workflow is not scheduled once a day at midnight.");
 }
 
 const fetchWeatherIndex = deployWorkflow.indexOf("npm run fetch:weather -- --strict");
