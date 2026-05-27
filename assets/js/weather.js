@@ -124,16 +124,22 @@ function applyScene(scene) {
   updateScene();
 }
 
-function resetScene() {
-  applyScene({
+function defaultSceneForDate(date = new Date()) {
+  const hour = date.getHours();
+
+  return {
     baseLayer: "default",
-    scene: "day",
+    scene: hour >= 7 && hour < 21 ? "day" : "night-full",
     clouds: "few",
     rain: "none",
     snow: "none",
     wind: "none",
     fog: false,
-  });
+  };
+}
+
+function resetScene() {
+  applyScene(defaultSceneForDate());
 }
 
 function optionValues(control) {
@@ -182,12 +188,17 @@ async function loadWeatherTimeline() {
 
     timelineState.manifest = manifest;
     timelineState.points = points;
-    timelineState.currentIndex = points.length - 1;
+    timelineState.currentIndex = 0;
     timelineRange.max = String(points.length - 1);
     timelineRange.value = String(timelineState.currentIndex);
     timeline.hidden = false;
 
-    await selectTimelinePoint(timelineState.currentIndex);
+    if (timelineOutput) {
+      const formattedTime = formatTimelineTime(points[timelineState.currentIndex].time);
+
+      timelineOutput.value = formattedTime;
+      timelineOutput.textContent = formattedTime;
+    }
   } catch {
     timeline.hidden = true;
   }
@@ -350,5 +361,5 @@ timelineRange?.addEventListener("input", () => {
   });
 });
 loadMeteoconIcons();
-updateScene();
+resetScene();
 loadWeatherTimeline();

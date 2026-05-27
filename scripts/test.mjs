@@ -111,8 +111,9 @@ class FakeFormData {
   }
 }
 
-function createWeatherHarness() {
+function createWeatherHarness({ now = "2026-05-27T12:00:00" } = {}) {
   const activeIntervals = new Set();
+  const fetchCalls = new Map();
   const form = new FakeElement();
   const stage = new FakeElement();
   const timeline = new FakeElement();
@@ -159,6 +160,21 @@ function createWeatherHarness() {
     { time: "2026-05-26T00:15", file: "2026/05/26/2026-05-26T00-15.json" },
   ];
   let intervalId = 0;
+  const NativeDate = Date;
+  class FakeDate extends NativeDate {
+    constructor(...args) {
+      if (args.length === 0) {
+        super(now);
+        return;
+      }
+
+      super(...args);
+    }
+
+    static now() {
+      return new NativeDate(now).getTime();
+    }
+  }
 
   form.elements = {
     baseLayer: new FakeElement({ value: "default" }),
@@ -208,47 +224,115 @@ function createWeatherHarness() {
     },
   };
   const context = {
-    Date,
+    Date: FakeDate,
     Error,
     FormData: FakeFormData,
     Intl,
     Math,
     URL,
     document,
-    fetch: async (url) => ({
-      ok: true,
-      json: async () => {
-        if (String(url).endsWith("index.json")) {
-          return { points };
-        }
+    fetch: async (url) => {
+      const urlString = String(url);
 
-        return {
-          scene: {
-            baseLayer: "default",
-            scene: "day",
-            clouds: "few",
-            rain: "none",
-            snow: "none",
-            wind: "none",
-            fog: false,
-          },
-        };
-      },
-    }),
+      fetchCalls.set(urlString, (fetchCalls.get(urlString) ?? 0) + 1);
+
+      return {
+        ok: true,
+        json: async () => {
+          if (urlString.endsWith("index.json")) {
+            return { points };
+          }
+
+          return {
+            scene: {
+              baseLayer: "default",
+              scene: "day",
+              clouds: "few",
+              rain: "none",
+              snow: "none",
+              wind: "none",
+              fog: false,
+            },
+          };
+        },
+      };
+    },
     window,
   };
 
   return {
     activeIntervalCount: () => activeIntervals.size,
     context,
+    fetchCountFor: (file) => Array.from(fetchCalls.entries())
+      .filter(([url]) => url.includes(file))
+      .reduce((total, [, count]) => total + count, 0),
     flushAsync: async () => {
       for (let i = 0; i < 10; i += 1) {
         await Promise.resolve();
       }
     },
+    layerIsVisible: (name) => !layers.find((layer) => layer.dataset.layer === name)?.classList.contains("is-hidden"),
     popovers,
     timelinePlayButton,
+    timelineRange,
   };
+}
+
+async function runInitialDefaultRegression() {
+  const regressionFailures = [];
+  const dayHarness = createWeatherHarness({ now: "2026-05-27T12:00:00" });
+  const earlyHarness = createWeatherHarness({ now: "2026-05-27T06:59:00" });
+  const lateHarness = createWeatherHarness({ now: "2026-05-27T21:00:00" });
+
+  vm.runInNewContext(weatherJs, dayHarness.context, { filename: "assets/js/weather.js" });
+  await dayHarness.flushAsync();
+
+  if (dayHarness.timelineRange.value !== "0") {
+    regressionFailures.push("Initial weather timeline does not start at the first point.");
+  }
+
+  if (dayHarness.activeIntervalCount() !== 0) {
+    regressionFailures.push("Initial weather timeline starts playback instead of staying paused.");
+  }
+
+  if (dayHarness.fetchCountFor("2026/05/26/2026-05-26T00-00.json") !== 0) {
+    regressionFailures.push("Initial weather scene fetches and applies the first timeline point.");
+  }
+
+  if (!dayHarness.layerIsVisible("sky-day") || dayHarness.layerIsVisible("sky-night")) {
+    regressionFailures.push("Browser daytime startup does not show the day scene.");
+  }
+
+  for (const [name, isVisible] of Object.entries({
+    base: true,
+    "base-snow": false,
+    "clouds-few": true,
+    "rain-light": false,
+    "rain-heavy": false,
+    "snow-light": false,
+    "snow-heavy": false,
+    fog: false,
+  })) {
+    if (dayHarness.layerIsVisible(name) !== isVisible) {
+      regressionFailures.push(`Initial default layer ${name} visibility is incorrect.`);
+    }
+  }
+
+  vm.runInNewContext(weatherJs, earlyHarness.context, { filename: "assets/js/weather.js" });
+  await earlyHarness.flushAsync();
+
+  if (!earlyHarness.layerIsVisible("sky-night") || earlyHarness.layerIsVisible("sky-day")) {
+    regressionFailures.push("Browser startup before 07:00 does not show the night scene.");
+  }
+
+  vm.runInNewContext(weatherJs, lateHarness.context, { filename: "assets/js/weather.js" });
+  await lateHarness.flushAsync();
+
+  if (!lateHarness.layerIsVisible("sky-night") || lateHarness.layerIsVisible("sky-day")) {
+    regressionFailures.push("Browser startup from 21:00 does not show the night scene.");
+  }
+
+  return regressionFailures;
 }
 
 async function runPopoverPlaybackRegression() {
@@ -296,6 +380,7 @@ async function runPopoverPlaybackRegression() {
   return regressionFailures;
 }
 
+failures.push(...await runInitialDefaultRegression());
 failures.push(...await runPopoverPlaybackRegression());
 
 if (weatherJs.includes("basmilius.github.io/meteocons")) {
