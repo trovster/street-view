@@ -111,8 +111,25 @@ class FakeFormData {
   }
 }
 
-function createWeatherHarness({ now = "2026-05-27T12:00:00" } = {}) {
+function createTimelinePoints(count, startTime = "2026-05-26T00:00:00Z") {
+  const start = new Date(startTime);
+
+  return Array.from({ length: count }, (_, index) => {
+    const pointDate = new Date(start.getTime() + index * 15 * 60 * 1000);
+    const time = pointDate.toISOString().slice(0, 16);
+    const [date, hourMinute] = time.split("T");
+    const [year, month, day] = date.split("-");
+
+    return {
+      time,
+      file: `${year}/${month}/${day}/${date}T${hourMinute.replace(":", "-")}.json`,
+    };
+  });
+}
+
+function createWeatherHarness({ now = "2026-05-27T12:00:00", points = createTimelinePoints(2) } = {}) {
   const activeIntervals = new Set();
+  const intervalDelays = new Map();
   const fetchCalls = new Map();
   const form = new FakeElement();
   const stage = new FakeElement();
@@ -121,6 +138,7 @@ function createWeatherHarness({ now = "2026-05-27T12:00:00" } = {}) {
   const timelinePlayIcon = new FakeElement();
   const timelineRange = new FakeElement({ value: "0" });
   const timelineOutput = new FakeElement();
+  const timelineSpeedSelect = new FakeElement({ value: "1" });
   const resetButton = new FakeElement();
   const randomButton = new FakeElement();
   const popovers = [new FakeElement(), new FakeElement(), new FakeElement()];
@@ -155,10 +173,6 @@ function createWeatherHarness({ now = "2026-05-27T12:00:00" } = {}) {
   ];
   const layers = layerNames.map((name) => new FakeElement({ dataset: { layer: name } }));
   const icons = [new FakeElement({ dataset: { meteocon: "clear-day" } })];
-  const points = [
-    { time: "2026-05-26T00:00", file: "2026/05/26/2026-05-26T00-00.json" },
-    { time: "2026-05-26T00:15", file: "2026/05/26/2026-05-26T00-15.json" },
-  ];
   let intervalId = 0;
   const NativeDate = Date;
   class FakeDate extends NativeDate {
@@ -199,6 +213,7 @@ function createWeatherHarness({ now = "2026-05-27T12:00:00" } = {}) {
         ["[data-weather-play-icon]", timelinePlayIcon],
         ["[data-weather-range]", timelineRange],
         ["[data-weather-output]", timelineOutput],
+        ["[data-weather-speed]", timelineSpeedSelect],
       ]).get(selector) ?? null;
     },
     querySelectorAll(selector) {
@@ -212,13 +227,15 @@ function createWeatherHarness({ now = "2026-05-27T12:00:00" } = {}) {
   const window = {
     clearInterval(id) {
       activeIntervals.delete(id);
+      intervalDelays.delete(id);
     },
     location: {
       href: "https://example.test/",
     },
-    setInterval() {
+    setInterval(callback, delay) {
       intervalId += 1;
       activeIntervals.add(intervalId);
+      intervalDelays.set(intervalId, delay);
 
       return intervalId;
     },
@@ -262,6 +279,7 @@ function createWeatherHarness({ now = "2026-05-27T12:00:00" } = {}) {
 
   return {
     activeIntervalCount: () => activeIntervals.size,
+    activeIntervalDelays: () => Array.from(intervalDelays.values()),
     context,
     fetchCountFor: (file) => Array.from(fetchCalls.entries())
       .filter(([url]) => url.includes(file))
@@ -275,6 +293,7 @@ function createWeatherHarness({ now = "2026-05-27T12:00:00" } = {}) {
     popovers,
     timelinePlayButton,
     timelineRange,
+    timelineSpeedSelect,
   };
 }
 
@@ -380,8 +399,74 @@ async function runPopoverPlaybackRegression() {
   return regressionFailures;
 }
 
+async function runTimelineWindowRegression() {
+  const regressionFailures = [];
+  const points = createTimelinePoints(300, "2026-05-23T00:00:00Z");
+  const firstVisiblePoint = points.at(-288);
+  const firstHiddenPoint = points[0];
+  const harness = createWeatherHarness({ points });
+
+  vm.runInNewContext(weatherJs, harness.context, { filename: "assets/js/weather.js" });
+  await harness.flushAsync();
+
+  if (harness.timelineRange.max !== "287") {
+    regressionFailures.push("The weather timeline does not limit the visible range to the latest 72 hours.");
+  }
+
+  harness.timelineRange.value = "0";
+  harness.timelineRange.dispatchEvent({ type: "input" });
+  await harness.flushAsync();
+
+  if (harness.fetchCountFor(firstVisiblePoint.file) !== 1) {
+    regressionFailures.push("The first visible weather timeline point is not the oldest point in the latest 72 hours.");
+  }
+
+  if (harness.fetchCountFor(firstHiddenPoint.file) !== 0) {
+    regressionFailures.push("The weather timeline includes points older than the latest 72 hours.");
+  }
+
+  return regressionFailures;
+}
+
+async function runPlaybackSpeedRegression() {
+  const regressionFailures = [];
+  const harness = createWeatherHarness();
+
+  vm.runInNewContext(weatherJs, harness.context, { filename: "assets/js/weather.js" });
+  await harness.flushAsync();
+
+  harness.timelinePlayButton.click();
+  await harness.flushAsync();
+
+  if (harness.activeIntervalDelays()[0] !== 200) {
+    regressionFailures.push("Default weather timeline playback speed is not 1x.");
+  }
+
+  harness.timelinePlayButton.click();
+  harness.timelineSpeedSelect.value = "0.5";
+  harness.timelineSpeedSelect.dispatchEvent({ type: "change" });
+  harness.timelinePlayButton.click();
+  await harness.flushAsync();
+
+  if (harness.activeIntervalDelays()[0] !== 400) {
+    regressionFailures.push("Weather timeline playback speed 0.5x does not slow autoplay.");
+  }
+
+  harness.timelineSpeedSelect.value = "2";
+  harness.timelineSpeedSelect.dispatchEvent({ type: "change" });
+  await harness.flushAsync();
+
+  if (harness.activeIntervalCount() !== 1 || harness.activeIntervalDelays()[0] !== 100) {
+    regressionFailures.push("Weather timeline playback speed 2x does not restart active autoplay faster.");
+  }
+
+  return regressionFailures;
+}
+
 failures.push(...await runInitialDefaultRegression());
 failures.push(...await runPopoverPlaybackRegression());
+failures.push(...await runTimelineWindowRegression());
+failures.push(...await runPlaybackSpeedRegression());
 
 if (weatherJs.includes("basmilius.github.io/meteocons")) {
   failures.push("weather.js still references the hosted Meteocons CDN.");
@@ -397,6 +482,10 @@ if (weatherJs.includes("assets/vendor/meteocons") || weatherJs.includes("/fill/"
 
 if (!html.includes("weather-timeline") || !html.includes("data-weather-play") || !html.includes("data-weather-range")) {
   failures.push("index.html does not include the weather timeline controls.");
+}
+
+if (!/<select[^>]+data-weather-speed[\s\S]*value="0\.5"[\s\S]*value="1" selected[\s\S]*value="2"/.test(html)) {
+  failures.push("index.html does not include the 0.5x, 1x, and 2x timeline speed control.");
 }
 
 if (!html.includes("timeline-time") || html.includes('class="sr-only" data-weather-output')) {
@@ -455,7 +544,7 @@ if (!weatherCss.includes("width: fit-content") || !weatherCss.includes("max-widt
   failures.push("The original image popover does not shrink-wrap to the contained image width.");
 }
 
-if (!weatherCss.includes("@media (min-width: 890px)") || !weatherCss.includes("bottom: max(28px, calc(env(safe-area-inset-bottom) + 28px))")) {
+if (!weatherCss.includes("@media (min-width: 990px)") || !weatherCss.includes("bottom: max(28px, calc(env(safe-area-inset-bottom) + 28px))")) {
   failures.push("The about button does not move beside the timeline when there is enough horizontal space.");
 }
 
@@ -515,9 +604,10 @@ if (deployWorkflow.includes("npm run fetch:weather")) {
 
 if (existsSync("street-view-data/data/index.json")) {
   const manifest = JSON.parse(readFileSync("street-view-data/data/index.json", "utf8"));
+  const expectedPointCount = manifest.pointCount ?? manifest.points?.length;
 
-  if (!Array.isArray(manifest.points) || manifest.points.length !== 192) {
-    failures.push("street-view-data/data/index.json does not contain exactly 192 weather points.");
+  if (!Array.isArray(manifest.points) || manifest.points.length === 0 || manifest.points.length !== expectedPointCount || manifest.points.length > 288) {
+    failures.push("street-view-data/data/index.json does not contain a valid latest-72-hours weather point set.");
   } else {
     const missingPointFiles = manifest.points.filter((point) => !existsSync(join("street-view-data/data", point.file)));
     const flatPointFiles = manifest.points.filter((point) => !/^\d{4}\/\d{2}\/\d{2}\/\d{4}-\d{2}-\d{2}T\d{2}-\d{2}\.json$/.test(point.file));

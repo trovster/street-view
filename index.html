@@ -16,7 +16,7 @@
     </button>
 
     <div class="popover-actions" role="group" aria-label="Scene information">
-      <button class="original-trigger" type="button" popovertarget="original-photo" aria-label="View Original Image" title="View Original Image">
+      <button class="original-trigger" type="button" popovertarget="original-photo" aria-label="View original image" title="View Original Image">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.16-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.41-1.409a2.25 2.25 0 0 1 3.182 0l2.907 2.909m-19.5 3.75h19.5a.75.75 0 0 0 .75-.75V5.25a.75.75 0 0 0-.75-.75H2.25a.75.75 0 0 0-.75.75v13.5a.75.75 0 0 0 .75.75Zm13.5-11.25h.008v.008h-.008V8.25Z" />
         </svg>
@@ -28,7 +28,7 @@
         </svg>
       </button>
 
-      <a class="github-trigger" href="https://github.com/trovster/street-view" target="_blank" rel="noreferrer external" title="View on GitHub">
+      <a class="github-trigger" href="https://github.com/trovster/street-view" target="_blank" rel="noreferrer external" aria-label="View GitHub project" title="View on GitHub">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
           <path d="M9 18c-4.51 2-5-2-7-2" />
@@ -314,8 +314,17 @@
         </svg>
       </button>
       <label class="timeline-range-label">
-        <span class="sr-only">Weather timeline point</span>
+        <span class="sr-only">Weather Timeline</span>
         <input type="range" data-weather-range min="0" max="0" value="0" step="1">
+      </label>
+      <label class="timeline-speed-label">
+        <span class="sr-only">Autoplay Speed</span>
+        <select data-weather-speed>
+          <option value="0.5">0.5x</option>
+          <option value="1" selected>1x</option>
+          <option value="2">2x</option>
+          <option value="3">3x</option>
+        </select>
       </label>
       <output class="timeline-time" data-weather-output aria-live="polite"></output>
     </section>

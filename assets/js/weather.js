@@ -5,10 +5,13 @@ const timelinePlayButton = document.querySelector("[data-weather-play]");
 const timelinePlayIcon = document.querySelector("[data-weather-play-icon]");
 const timelineRange = document.querySelector("[data-weather-range]");
 const timelineOutput = document.querySelector("[data-weather-output]");
+const timelineSpeedSelect = document.querySelector("[data-weather-speed]");
 const popovers = Array.from(document.querySelectorAll("[popover]"));
 const meteoconIconBaseUrl = "assets/icons/meteocons/";
 const weatherDataIndexUrl = "street-view-data/data/index.json";
-const timelinePlaybackDelay = 200;
+const timelineBasePlaybackDelay = 500;
+const timelinneWindowDayCount = 3;
+const timelineWindowPointCount = timelinneWindowDayCount * 24 * 4; // 24 hours of 15-minute points.
 const playIconPath = "M8 5v14l11-7z";
 const pauseIconPath = "M8 5h3v14H8zM13 5h3v14h-3z";
 const layers = new Map(
@@ -19,6 +22,7 @@ const timelineState = {
   interval: null,
   manifest: null,
   openPopovers: new Set(),
+  playbackSpeed: 1,
   points: [],
   pointCache: new Map(),
   resumeAfterPopoverCloses: false,
@@ -180,7 +184,7 @@ async function loadWeatherTimeline() {
     }
 
     const manifest = await response.json();
-    const points = Array.isArray(manifest.points) ? manifest.points : [];
+    const points = latestTimelinePoints(Array.isArray(manifest.points) ? manifest.points : []);
 
     if (points.length === 0) {
       throw new Error("Weather manifest has no points.");
@@ -259,7 +263,7 @@ async function startTimelinePlayback() {
     }
   }
 
-  timelineState.interval = window.setInterval(advanceTimelinePlayback, timelinePlaybackDelay);
+  timelineState.interval = window.setInterval(advanceTimelinePlayback, timelinePlaybackDelay());
   timelinePlayButton.setAttribute("aria-label", "Pause weather timeline");
   timelinePlayIcon?.setAttribute("d", pauseIconPath);
 }
@@ -290,6 +294,35 @@ async function advanceTimelinePlayback() {
 
 function clamp(value, min, max) {
   return Math.min(Math.max(Number(value), min), max);
+}
+
+function latestTimelinePoints(points) {
+  return points.slice(-timelineWindowPointCount);
+}
+
+function timelinePlaybackDelay() {
+  return timelineBasePlaybackDelay / timelineState.playbackSpeed;
+}
+
+function normalisePlaybackSpeed(value) {
+  const speed = Number(value);
+
+  return [0.5, 1, 2, 3].includes(speed) ? speed : 1;
+}
+
+function setTimelinePlaybackSpeed(value) {
+  timelineState.playbackSpeed = normalisePlaybackSpeed(value);
+
+  if (timelineSpeedSelect) {
+    timelineSpeedSelect.value = String(timelineState.playbackSpeed);
+  }
+
+  if (!timelineState.interval) {
+    return;
+  }
+
+  window.clearInterval(timelineState.interval);
+  timelineState.interval = window.setInterval(advanceTimelinePlayback, timelinePlaybackDelay());
 }
 
 function formatTimelineTime(time) {
@@ -359,6 +392,9 @@ timelineRange?.addEventListener("input", () => {
   selectTimelinePoint(timelineRange.value).catch(() => {
     timeline.hidden = true;
   });
+});
+timelineSpeedSelect?.addEventListener("change", () => {
+  setTimelinePlaybackSpeed(timelineSpeedSelect.value);
 });
 loadMeteoconIcons();
 resetScene();

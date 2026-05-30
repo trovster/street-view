@@ -534,7 +534,7 @@ button:hover,
   box-shadow: 0 12px 30px rgba(21, 28, 32, 0.18);
   display: grid;
   column-gap: 12px;
-  grid-template-columns: 44px minmax(180px, 100%);
+  grid-template-columns: 44px minmax(180px, 1fr) 76px;
   grid-template-rows: auto auto;
   left: 50%;
   max-width: calc(100vw - 32px);
@@ -566,6 +566,16 @@ button:hover,
   display: block;
   grid-column: 2;
   min-width: 0;
+}
+
+.timeline-speed-label {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+}
+
+.timeline-speed-label select {
+  min-height: 38px;
+  padding: 7px 30px 7px 10px;
 }
 
 .weather-timeline input[type="range"] {
@@ -619,9 +629,5 @@ button:hover,
   .option-grid,
   .option-grid--scene {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .weather-timeline {
-    grid-template-columns: 42px minmax(0, 1fr);
   }
 }
