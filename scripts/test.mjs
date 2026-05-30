@@ -438,7 +438,7 @@ async function runPlaybackSpeedRegression() {
   harness.timelinePlayButton.click();
   await harness.flushAsync();
 
-  if (harness.activeIntervalDelays()[0] !== 200) {
+  if (harness.activeIntervalDelays()[0] !== 500) {
     regressionFailures.push("Default weather timeline playback speed is not 1x.");
   }
 
@@ -448,7 +448,7 @@ async function runPlaybackSpeedRegression() {
   harness.timelinePlayButton.click();
   await harness.flushAsync();
 
-  if (harness.activeIntervalDelays()[0] !== 400) {
+  if (harness.activeIntervalDelays()[0] !== 1000) {
     regressionFailures.push("Weather timeline playback speed 0.5x does not slow autoplay.");
   }
 
@@ -456,7 +456,7 @@ async function runPlaybackSpeedRegression() {
   harness.timelineSpeedSelect.dispatchEvent({ type: "change" });
   await harness.flushAsync();
 
-  if (harness.activeIntervalCount() !== 1 || harness.activeIntervalDelays()[0] !== 100) {
+  if (harness.activeIntervalCount() !== 1 || harness.activeIntervalDelays()[0] !== 250) {
     regressionFailures.push("Weather timeline playback speed 2x does not restart active autoplay faster.");
   }
 
