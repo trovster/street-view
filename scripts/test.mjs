@@ -431,12 +431,20 @@ if (!html.includes('popovertarget="original-photo"') || !html.includes('aria-lab
   failures.push("index.html does not include an original image popover trigger.");
 }
 
+if (!html.includes('href="https://github.com/trovster/street-view"') || !html.includes('aria-label="View GitHub project"') || !html.includes('class="github-trigger"')) {
+  failures.push("index.html does not include a GitHub project link trigger.");
+}
+
+if (html.indexOf('class="github-trigger"') < html.indexOf('class="about-trigger"')) {
+  failures.push("The GitHub project link is not placed to the right of the about button.");
+}
+
 if (!html.includes('id="original-photo"') || !html.includes('src="original.webp"') || !html.includes('aria-label="original-photo"')) {
   failures.push("index.html does not include an original image popover with original.webp.");
 }
 
-if (!weatherCss.includes(".popover-actions") || !weatherCss.includes("grid-template-columns: repeat(2, 44px)")) {
-  failures.push("The info and original image buttons are not grouped side by side.");
+if (!weatherCss.includes(".popover-actions") || !weatherCss.includes("grid-template-columns: repeat(3, 44px)")) {
+  failures.push("The scene information buttons are not grouped side by side.");
 }
 
 if (!weatherCss.includes(".original-photo") || !weatherCss.includes("place-items: center")) {

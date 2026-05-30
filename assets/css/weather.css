@@ -273,7 +273,8 @@ select {
   gap: 10px;
 }
 
-button {
+button,
+.github-trigger {
   align-items: center;
   background: #182025;
   border: 0;
@@ -287,10 +288,12 @@ button {
   justify-content: center;
   min-height: 42px;
   padding: 9px 16px;
+  text-decoration: none;
 }
 
 button svg,
-.options-trigger svg {
+.options-trigger svg,
+.github-trigger svg {
   fill: none;
   height: 18px;
   stroke: currentColor;
@@ -300,7 +303,8 @@ button svg,
   width: 18px;
 }
 
-button:hover {
+button:hover,
+.github-trigger:hover {
   background: #314046;
 }
 
@@ -317,7 +321,7 @@ button:hover {
 .popover-actions {
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(2, 44px);
+  grid-template-columns: repeat(3, 44px);
   left: max(16px, env(safe-area-inset-left));
   position: fixed;
   top: max(16px, env(safe-area-inset-top));
@@ -325,6 +329,7 @@ button:hover {
 }
 
 .about-trigger,
+.github-trigger,
 .original-trigger {
   backdrop-filter: blur(10px);
   background: rgba(24, 32, 37, 0.88);
@@ -336,6 +341,7 @@ button:hover {
 }
 
 .about-trigger:hover,
+.github-trigger:hover,
 .original-trigger:hover {
   background: #314046;
 }
@@ -577,7 +583,7 @@ button:hover {
   min-height: 1em;
 }
 
-@media (min-width: 890px) {
+@media (min-width: 990px) {
   .popover-actions {
     bottom: max(28px, calc(env(safe-area-inset-bottom) + 28px));
     left: auto;
